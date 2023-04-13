@@ -1,31 +1,28 @@
 package com.project.zoopiter.web;
 
 import com.project.zoopiter.domain.bbsc.dao.Bbsc;
-import com.project.zoopiter.domain.bbsc.dao.BbscFilterCondition;
 import com.project.zoopiter.domain.bbsc.svc.BbscSVC;
 import com.project.zoopiter.domain.common.code.Code;
 import com.project.zoopiter.domain.common.code.CodeDAO;
-import com.project.zoopiter.domain.common.paging.FindCriteria;
 import com.project.zoopiter.web.form.bbsc.AddForm;
 import com.project.zoopiter.web.form.bbsc.DetailForm;
 import com.project.zoopiter.web.form.bbsc.EditForm;
-import com.project.zoopiter.web.form.bbsc.ListForm;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.thymeleaf.util.StringUtils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Controller
@@ -38,9 +35,9 @@ public class BbscController {
   private final CodeDAO codeDAO;
 
 
-  @Autowired
-  @Qualifier("fc10") //동일한 타입의 객체가 여러개있을때 빈이름을 명시적으로 지정해서 주입받을때
-  private FindCriteria fc;
+//  @Autowired
+//  @Qualifier("fc10") //동일한 타입의 객체가 여러개있을때 빈이름을 명시적으로 지정해서 주입받을때
+//  private FindCriteria fc;
 
 
   //게시판 코드,디코드 가져오기
@@ -127,80 +124,80 @@ public class BbscController {
     return "redirect:/bbsc/{id}";
   }
 
-  //전체목록
-  @GetMapping({"/list",
-      "/list/{reqPage}",
-      "/list/{reqPage}//",
-      "/list/{reqPage}/{searchType}/{keyword}"})
-  public String listAndReqPage(
-      @PathVariable(required = false) Optional<Integer> reqPage,
-      @PathVariable(required = false) Optional<String> searchType,
-      @PathVariable(required = false) Optional<String> keyword,
-      @RequestParam(required = false) Optional<String> category,
-      Model model) {
-    log.info("/list 요청됨{},{},{},{}",reqPage,searchType,keyword,category);
-
-    String cate = getCategory(category);
-
-    //FindCriteria 값 설정
-    fc.getRc().setReqPage(reqPage.orElse(1)); //요청페이지, 요청없으면 1
-    fc.setSearchType(searchType.orElse(""));  //검색유형
-    fc.setKeyword(keyword.orElse(""));        //검색어
-
-    List<Bbsc> list = null;
-    //게시물 목록 전체
-    if(category == null || StringUtils.isEmpty(cate)) {
-
-      //검색어 있음
-      if(searchType.isPresent() && keyword.isPresent()){
-        BbscFilterCondition filterCondition = new BbscFilterCondition(
-            "",fc.getRc().getStartRec(), fc.getRc().getEndRec(),
-            searchType.get(),
-            keyword.get());
-        fc.setTotalRec(bbscSVC.totalCount(filterCondition));
-        fc.setSearchType(searchType.get());
-        fc.setKeyword(keyword.get());
-        list = bbscSVC.findAll(filterCondition);
-
-        //검색어 없음
-      }else {
-        //총레코드수
-        fc.setTotalRec(bbscSVC.totalCount());
-        list = bbscSVC.findAll(fc.getRc().getStartRec(), fc.getRc().getEndRec());
-      }
-
-      //카테고리별 목록
-    }else{
-      //검색어 있음
-      if(searchType.isPresent() && keyword.isPresent()){
-        BbscFilterCondition filterCondition = new BbscFilterCondition(
-            category.get(),fc.getRc().getStartRec(), fc.getRc().getEndRec(),
-            searchType.get(),
-            keyword.get());
-        fc.setTotalRec(bbscSVC.totalCount(filterCondition));
-        fc.setSearchType(searchType.get());
-        fc.setKeyword(keyword.get());
-        list = bbscSVC.findAll(filterCondition);
-        //검색어 없음
-      }else {
-        fc.setTotalRec(bbscSVC.totalCount(cate));
-        list = bbscSVC.findAll(cate, fc.getRc().getStartRec(), fc.getRc().getEndRec());
-      }
-    }
-
-    List<ListForm> partOfList = new ArrayList<>();
-    for (Bbsc bbsc : list) {
-      ListForm listForm = new ListForm();
-      BeanUtils.copyProperties(bbsc, listForm);
-      partOfList.add(listForm);
-    }
-
-    model.addAttribute("list", partOfList);
-    model.addAttribute("fc",fc);
-    model.addAttribute("category", cate);
-
-    return "board/board_com";
-  }
+//  //전체목록
+//  @GetMapping({"/list",
+//      "/list/{reqPage}",
+//      "/list/{reqPage}//",
+//      "/list/{reqPage}/{searchType}/{keyword}"})
+//  public String listAndReqPage(
+//      @PathVariable(required = false) Optional<Integer> reqPage,
+//      @PathVariable(required = false) Optional<String> searchType,
+//      @PathVariable(required = false) Optional<String> keyword,
+//      @RequestParam(required = false) Optional<String> category,
+//      Model model) {
+//    log.info("/list 요청됨{},{},{},{}",reqPage,searchType,keyword,category);
+//
+//    String cate = getCategory(category);
+//
+//    //FindCriteria 값 설정
+//    fc.getRc().setReqPage(reqPage.orElse(1)); //요청페이지, 요청없으면 1
+//    fc.setSearchType(searchType.orElse(""));  //검색유형
+//    fc.setKeyword(keyword.orElse(""));        //검색어
+//
+//    List<Bbsc> list = null;
+//    //게시물 목록 전체
+//    if(category == null || StringUtils.isEmpty(cate)) {
+//
+//      //검색어 있음
+//      if(searchType.isPresent() && keyword.isPresent()){
+//        BbscFilterCondition filterCondition = new BbscFilterCondition(
+//            "",fc.getRc().getStartRec(), fc.getRc().getEndRec(),
+//            searchType.get(),
+//            keyword.get());
+//        fc.setTotalRec(bbscSVC.totalCount(filterCondition));
+//        fc.setSearchType(searchType.get());
+//        fc.setKeyword(keyword.get());
+//        list = bbscSVC.findAll(filterCondition);
+//
+//        //검색어 없음
+//      }else {
+//        //총레코드수
+//        fc.setTotalRec(bbscSVC.totalCount());
+//        list = bbscSVC.findAll(fc.getRc().getStartRec(), fc.getRc().getEndRec());
+//      }
+//
+//      //카테고리별 목록
+//    }else{
+//      //검색어 있음
+//      if(searchType.isPresent() && keyword.isPresent()){
+//        BbscFilterCondition filterCondition = new BbscFilterCondition(
+//            category.get(),fc.getRc().getStartRec(), fc.getRc().getEndRec(),
+//            searchType.get(),
+//            keyword.get());
+//        fc.setTotalRec(bbscSVC.totalCount(filterCondition));
+//        fc.setSearchType(searchType.get());
+//        fc.setKeyword(keyword.get());
+//        list = bbscSVC.findAll(filterCondition);
+//        //검색어 없음
+//      }else {
+//        fc.setTotalRec(bbscSVC.totalCount(cate));
+//        list = bbscSVC.findAll(cate, fc.getRc().getStartRec(), fc.getRc().getEndRec());
+//      }
+//    }
+//
+//    List<ListForm> partOfList = new ArrayList<>();
+//    for (Bbsc bbsc : list) {
+//      ListForm listForm = new ListForm();
+//      BeanUtils.copyProperties(bbsc, listForm);
+//      partOfList.add(listForm);
+//    }
+//
+//    model.addAttribute("list", partOfList);
+//    model.addAttribute("fc",fc);
+//    model.addAttribute("category", cate);
+//
+//    return "board/board_com";
+//  }
 
   //조회
   @GetMapping("/{bbscId}")
