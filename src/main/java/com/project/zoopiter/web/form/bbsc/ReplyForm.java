@@ -1,11 +1,8 @@
-package com.project.zoopiter.web.form.bbs;
+package com.project.zoopiter.web.form.bbsc;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @Data
 public class ReplyForm {
@@ -23,5 +20,5 @@ public class ReplyForm {
   @Size(min=5)
   private String bcContent;      //  내용 BCONTENT	CLOB
 
-  private List<MultipartFile> files;  // 첨부파일
+//  private List<MultipartFile> files;  // 첨부파일
 }

@@ -3,11 +3,15 @@ package com.project.zoopiter.web;
 import com.project.zoopiter.domain.bbsc.dao.Bbsc;
 import com.project.zoopiter.domain.bbsc.dao.BbscFilterCondition;
 import com.project.zoopiter.domain.bbsc.svc.BbscSVC;
-import com.project.zoopiter.domain.comment.paging.FindCriteria;
-import com.project.zoopiter.web.form.bbs.AddForm;
-import com.project.zoopiter.web.form.bbs.ListForm;
-import com.project.zoopiter.web.form.login.LoginForm;
+import com.project.zoopiter.domain.common.code.Code;
+import com.project.zoopiter.domain.common.code.CodeDAO;
+import com.project.zoopiter.domain.common.paging.FindCriteria;
+import com.project.zoopiter.web.form.bbsc.AddForm;
+import com.project.zoopiter.web.form.bbsc.DetailForm;
+import com.project.zoopiter.web.form.bbsc.EditForm;
+import com.project.zoopiter.web.form.bbsc.ListForm;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -21,9 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.thymeleaf.util.StringUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Controller
@@ -33,17 +35,28 @@ public class BbscController {
 
   private final BbscSVC bbscSVC;
 
+  private final CodeDAO codeDAO;
+
+
   @Autowired
   @Qualifier("fc10") //동일한 타입의 객체가 여러개있을때 빈이름을 명시적으로 지정해서 주입받을때
   private FindCriteria fc;
 
 
-  //test
-  @GetMapping("/list")
-  public String bbsc(Model model) {
-  //  SaveForm saveForm = new SaveForm();
-    // model.addAttribute("saveForm", saveForm);
-    return "board/board_com";
+  //게시판 코드,디코드 가져오기
+  @ModelAttribute("classifier")
+  public List<Code> classifier(){
+    return codeDAO.code("B01");
+  }
+
+  @ModelAttribute("bbsTitle")
+  public Map<String,String> bbsTitle(){
+    List<Code> codes = codeDAO.code("B01");
+    Map<String,String> btitle = new HashMap<>();
+    for (Code code : codes) {
+      btitle.put(code.getCode(), code.getDecode());
+    }
+    return btitle;
   }
 
 
@@ -56,11 +69,10 @@ public class BbscController {
 
     String cate = getCategory(category);
 
-    LoginForm loginMember = (LoginForm)session.getAttribute(SessionConst.LOGIN_MEMBER);
+    LoginMember loginMember = (LoginMember)session.getAttribute(SessionConst.LOGIN_MEMBER);
 
     AddForm addForm = new AddForm();
-//    addForm.setEmail(loginMember.getEmail());
-//    addForm.setNickname(loginMember.getNickname());
+    addForm.setUserNick(loginMember.getUserNick());
     model.addAttribute("addForm", addForm);
     model.addAttribute("category", cate);
 
@@ -81,7 +93,7 @@ public class BbscController {
 
     if(bindingResult.hasErrors()){
       log.info("add/bindingResult={}",bindingResult);
-      return "bbs/addForm";
+      return "board/board_com-add";
     }
 
     String cate = getCategory(category);
@@ -112,14 +124,7 @@ public class BbscController {
 //    redirectAttributes.addAttribute("category",cate);
 //    // <=서버응답 302 get http://서버:port/bbs/10
 //    // =>클라이언트요청 get http://서버:port/bbs/10
-    return "redirect:/bbs/{id}";
-  }
-
-  //쿼리스트링 카테고리 읽기, 없으면 ""반환
-  private String getCategory(Optional<String> category) {
-    String cate = category.isPresent()? category.get():"";
-    log.info("category={}", cate);
-    return cate;
+    return "redirect:/bbsc/{id}";
   }
 
   //전체목록
@@ -194,33 +199,105 @@ public class BbscController {
     model.addAttribute("fc",fc);
     model.addAttribute("category", cate);
 
-    return "bbsc/list";
+    return "board/board_com";
   }
 
+  //조회
+  @GetMapping("/{bbscId}")
+  public String detail(
+      @PathVariable Long bbscId,
+      @RequestParam(required = false) Optional<String> category,
+      Model model) {
 
+    String cate = getCategory(category);
 
+    Bbsc detailBbsc = bbscSVC.findByBbscId(bbscId);
+    DetailForm detailForm = new DetailForm();
+    BeanUtils.copyProperties(detailBbsc, detailForm);
+    model.addAttribute("detailForm", detailForm);
+    model.addAttribute("category", cate);
 
-
-
-
-
-
-//  //게시글 등록 처리
-//  @PostMapping("/add2")
-//  public String save(
-//
-//      @Valid @ModelAttribute SaveForm saveForm,
-//      BindingResult bindingResult,
-//      RedirectAttributes redirectAttributes
-//  ) {
-//    //log.info("saveForm={}", saveForm);
-//
-//    if (bindingResult.hasErrors()) {
-//      log.info("bindingResult={}", bindingResult);
-//      return "product/saveForm";
+    //첨부조회
+//    List<UploadFile> attachFiles = uploadFileSVC.getFilesByCodeWithRid(detailBbs.getBcategory(), detailBbs.getBbsId());
+//    if(attachFiles.size() > 0){
+//      log.info("attachFiles={}",attachFiles);
+//      model.addAttribute("attachFiles", attachFiles);
 //    }
-//    return null;
-//  }
+
+    return "board/board_com-detail";
+  }
+
+  //삭제
+  @GetMapping("/{bbscId}/del")
+  public String del(
+      @PathVariable Long bbscId,
+      @RequestParam(required = false) Optional<String> category) {
+
+    bbscSVC.deleteByBbscId(bbscId);
+    String cate = getCategory(category);
+    return "redirect:/bbsc/list?category="+cate;
+  }
+
+  //수정양식
+  @GetMapping("/{bbscId}/edit")
+  public String editForm(
+      @PathVariable Long bbscId,
+      @RequestParam(required = false) Optional<String> category,
+      Model model){
+    String cate = getCategory(category);
+    Bbsc bbsc = bbscSVC.findByBbscId(bbscId);
+
+    EditForm editForm = new EditForm();
+    BeanUtils.copyProperties(bbsc,editForm);
+    model.addAttribute("editForm", editForm);
+    model.addAttribute("category",cate);
+
+    //첨부조회
+//    List<UploadFile> attachFiles = uploadFileSVC.getFilesByCodeWithRid(bbs.getBcategory(), bbs.getBbsId());
+//    if(attachFiles.size() > 0){
+//      log.info("attachFiles={}",attachFiles);
+//      model.addAttribute("attachFiles", attachFiles);
+//    }
+
+    return "board/board_com-edit";
+  }
+
+  //수정처리
+  @PostMapping("/{bbscId}/edit")
+  public String edit(
+      @PathVariable Long bbscId,
+      @RequestParam(required = false) Optional<String> category,
+      @Valid @ModelAttribute EditForm editForm,
+      BindingResult bindingResult,
+      RedirectAttributes redirectAttributes
+  ) {
+
+    if(bindingResult.hasErrors()){
+      return "board/board_com-edit";
+    }
+
+    String cate = getCategory(category);
+    Bbsc bbsc = new Bbsc();
+    BeanUtils.copyProperties(editForm, bbsc);
+    bbscSVC.update(bbscId,bbsc);
+
+//    if(editForm.getFiles().size() == 0) {
+//      bbscSVC.update(bbscId, bbsc);
+//    }else{
+//      bbscSVC.update(bbscId, bbsc, editForm.getFiles());
+//    }
+    redirectAttributes.addAttribute("bbscId",bbscId);
+    redirectAttributes.addAttribute("category", cate);
+
+    return "redirect:/bbsc/{bbscId}";
+  }
+
+  //쿼리스트링 카테고리 읽기, 없으면 ""반환
+  private String getCategory(Optional<String> category) {
+    String cate = category.isPresent()? category.get():"";
+    log.info("category={}", cate);
+    return cate;
+  }
 }
 
 

@@ -1,4 +1,4 @@
-package com.project.zoopiter.domain.comment.paging;
+package com.project.zoopiter.domain.common.paging;
 
 import lombok.ToString;
 

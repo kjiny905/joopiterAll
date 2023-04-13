@@ -22,7 +22,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BbscDAOImpl implements BbscDAO {
 
-  private final BbscDAO bbscDAO;
   private final JdbcTemplate template;
 
   /**

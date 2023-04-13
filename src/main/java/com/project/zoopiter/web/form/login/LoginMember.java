@@ -1,12 +1,14 @@
-package com.project.zoopiter.web.login;
+package com.project.zoopiter.web.form.login;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 public class LoginMember {
   private String userId;
   private String userNick;
-  private String gubun;
+  private String bcGubun;
 }

@@ -1,4 +1,4 @@
-package com.project.zoopiter.domain.comment.file;
+package com.project.zoopiter.domain.common.file;
 
 import lombok.Data;
 

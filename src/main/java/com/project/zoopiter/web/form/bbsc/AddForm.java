@@ -1,16 +1,12 @@
-package com.project.zoopiter.web.form.bbs;
+package com.project.zoopiter.web.form.bbsc;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @Data
-public class EditForm {
+public class AddForm {
 
-  private Long bbscId;
   @NotBlank
   @Size(min=5,max = 11)
   private String bcGubun;     //  게시판 구분(병원후기: B0101, 커뮤니티: B0102)
@@ -23,7 +19,6 @@ public class EditForm {
   @NotBlank
   @Size(min=5)
   private String bcContent;      //  내용 BCONTENT	CLOB
-  private int bcHit;              //  조회수
 
-  private List<MultipartFile> files;  // 첨부파일
+//  private List<MultipartFile> files;  // 첨부파일
 }
